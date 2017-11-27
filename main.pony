@@ -55,7 +55,7 @@ class InitialState is StateMachineState
     state_data.env.out.print(name() + "::send_to: data=" + data
                            + " count=" + state_data.count.string())
     transitionTo(state_data, state_data.working_state)
-    state_data.state_machine.send_to(dest, data)
+    dest.send_to(state_data.state_machine, data)
 
 class WorkingState is StateMachineState
   fun name(): String =>
