@@ -2,7 +2,7 @@ trait StateMachine
   be send_to(dest: StateMachine tag, data: String)
   be stop()
 
-trait StateMachineState
+trait StateMachineState is Transitionable
   fun send_to(state_data: StateData ref,
                 dest: StateMachine tag, data: String) =>
     // Default: ignore all messages if not implemented
@@ -15,7 +15,20 @@ trait StateMachineState
                             + state_data.count.string())
     transitionTo(state_data, state_data.done_state)
 
+trait Transitionable
+  fun enter(state_data: StateData ref, new_state: StateMachineState) =>
+    state_data.enter_count = state_data.enter_count + 1
+    state_data.env.out.print("StateMachineState::enter:"
+                           + " enter_count=" + state_data.enter_count.string())
+
+  fun exit(state_data: StateData ref, new_state: StateMachineState) =>
+    state_data.exit_count = state_data.exit_count + 1
+    state_data.env.out.print("StateMachineState::exit:"
+                           + " exit_count=" + state_data.exit_count.string())
+
   fun transitionTo(state_data: StateData ref, new_state: StateMachineState) =>
+    state_data.cur_state.exit(state_data, new_state)
+    new_state.enter(state_data, new_state)
     state_data.cur_state = new_state
 
 class StateData
@@ -25,6 +38,8 @@ class StateData
   let working_state: WorkingState = WorkingState
   let done_state: DoneState = DoneState
 
+  var enter_count: U64 = 0
+  var exit_count: U64 = 0
   var count: U64 = 0
   let max_count: U64
   var cur_state: StateMachineState
@@ -34,6 +49,7 @@ class StateData
     env = env'
     max_count = max_count'
     cur_state = initial_state
+    cur_state.enter(this, cur_state)
 
 class InitialState is StateMachineState
   fun send_to(state_data: StateData ref,
@@ -45,6 +61,16 @@ class InitialState is StateMachineState
     state_data.state_machine.send_to(dest, data)
 
 class WorkingState is StateMachineState
+  fun enter(state_data: StateData ref, new_state: StateMachineState) =>
+    state_data.enter_count = state_data.enter_count + 1
+    state_data.env.out.print("WorkingState::enter:"
+                           + " enter_count=" + state_data.enter_count.string())
+
+  fun exit(state_data: StateData ref, new_state: StateMachineState) =>
+    state_data.exit_count = state_data.exit_count + 1
+    state_data.env.out.print("WorkingState::exit:"
+                           + " exit_count=" + state_data.exit_count.string())
+
   fun send_to(state_data: StateData ref,
                 dest: StateMachine tag, data: String) =>
     state_data.count = state_data.count + 1
