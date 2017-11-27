@@ -2,9 +2,10 @@ trait StateMachine
   be send_to(dest: StateMachine tag, data: String)
   be stop()
 
-trait StateMachineState is Transitionable
+trait HasName
   fun name(): String
 
+trait StateMachineState is (Transitionable & HasName)
   fun send_to(state_data: StateData ref,
                 dest: StateMachine tag, data: String) =>
     // Default: ignore all messages if not implemented
