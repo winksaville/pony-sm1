@@ -13,7 +13,10 @@ trait StateMachineState
     // Default: always transition to stop
     state_data.env.out.print("StateMachineState::stop: count="
                             + state_data.count.string())
-    state_data.transitionTo(state_data.done_state)
+    transitionTo(state_data, state_data.done_state)
+
+  fun transitionTo(state_data: StateData ref, new_state: StateMachineState) =>
+    state_data.cur_state = new_state
 
 class StateData
   let state_machine: StateMachine tag
@@ -32,16 +35,13 @@ class StateData
     max_count = max_count'
     cur_state = initial_state
 
-  fun ref transitionTo(new_state: StateMachineState) =>
-    cur_state = new_state
-
 class InitialState is StateMachineState
   fun send_to(state_data: StateData ref,
                 dest: StateMachine tag, data: String) =>
     state_data.count = state_data.count + 1
     state_data.env.out.print("InitialState::send_to: data=" + data
                            + " count=" + state_data.count.string())
-    state_data.transitionTo(state_data.working_state)
+    transitionTo(state_data, state_data.working_state)
     state_data.state_machine.send_to(dest, data)
 
 class WorkingState is StateMachineState
@@ -58,7 +58,7 @@ class WorkingState is StateMachineState
 
   fun stop(state_data: StateData ref) =>
     state_data.env.out.print("WorkingState::stop: transitionTo done_state")
-    state_data.transitionTo(state_data.done_state)
+    transitionTo(state_data, state_data.done_state)
 
 class DoneState is StateMachineState
   fun stop(state_data: StateData ref) =>
