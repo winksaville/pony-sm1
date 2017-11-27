@@ -4,14 +4,15 @@ trait StateMachine
 
 trait StateMachineState
   fun send_to(state_data: StateData ref,
-                  dest: StateMachine tag, data: String) =>
-    state_data.env.out.print("send_to: data=" + data
+                dest: StateMachine tag, data: String) =>
+    // Default: ignore all messages if not implemented
+    state_data.env.out.print("StateMachineState::send_to: ignore data=" + data
                            + " count=" + state_data.count.string())
-    dest.send_to(state_data.state_machine,
-        "data: count=" + state_data.count.string())
 
   fun stop(state_data: StateData ref) =>
-    state_data.env.out.print("stop: transitionTo done_state")
+    // Default: always transition to stop
+    state_data.env.out.print("StateMachineState::stop: count="
+                            + state_data.count.string())
     state_data.transitionTo(state_data.done_state)
 
 class StateData
@@ -36,7 +37,7 @@ class StateData
 
 class InitialState is StateMachineState
   fun send_to(state_data: StateData ref,
-                  dest: StateMachine tag, data: String) =>
+                dest: StateMachine tag, data: String) =>
     state_data.count = state_data.count + 1
     state_data.env.out.print("InitialState::send_to: data=" + data
                            + " count=" + state_data.count.string())
@@ -45,7 +46,7 @@ class InitialState is StateMachineState
 
 class WorkingState is StateMachineState
   fun send_to(state_data: StateData ref,
-                  dest: StateMachine tag, data: String) =>
+                dest: StateMachine tag, data: String) =>
     state_data.count = state_data.count + 1
     state_data.env.out.print("WorkingState::send_to: data=" + data
                            + " count=" + state_data.count.string())
@@ -55,7 +56,14 @@ class WorkingState is StateMachineState
       dest.send_to(state_data.state_machine, data)
     end
 
+  fun stop(state_data: StateData ref) =>
+    state_data.env.out.print("WorkingState::stop: transitionTo done_state")
+    state_data.transitionTo(state_data.done_state)
+
 class DoneState is StateMachineState
+  fun stop(state_data: StateData ref) =>
+    // Never transition away from DoneState
+    state_data.env.out.print("Done::Stop: done")
 
 actor Main is StateMachine
   var _state_data: StateData
