@@ -28,7 +28,7 @@ trait Transitionable
     state_data.cur_state = new_state
 
 class StateData
-  let state_machine: StateMachine tag
+  let sm: StateMachine tag
   let env: Env
   let initial_state: InitialState = InitialState
   let working_state: WorkingState = WorkingState
@@ -38,8 +38,8 @@ class StateData
   let max_count: U64
   var cur_state: StateMachineState
 
-  new create(state_machine': StateMachine tag, env': Env, max_count': U64) =>
-    state_machine = state_machine'
+  new create(sm': StateMachine tag, env': Env, max_count': U64) =>
+    sm = sm'
     env = env'
     max_count = max_count'
     cur_state = initial_state
@@ -55,7 +55,7 @@ class InitialState is StateMachineState
     state_data.env.out.print(name() + "::send_to: data=" + data
                            + " count=" + state_data.count.string())
     transitionTo(state_data, state_data.working_state)
-    dest.send_to(state_data.state_machine, data)
+    dest.send_to(state_data.sm, data)
 
 class WorkingState is StateMachineState
   fun name(): String =>
@@ -73,9 +73,9 @@ class WorkingState is StateMachineState
     state_data.env.out.print(name() + "::send_to: data=" + data
                            + " count=" + state_data.count.string())
     if (state_data.count >= state_data.max_count) then
-      state_data.state_machine.stop()
+      state_data.sm.stop()
     else
-      dest.send_to(state_data.state_machine, data)
+      dest.send_to(state_data.sm, data)
     end
 
   fun stop(state_data: StateData ref) =>
