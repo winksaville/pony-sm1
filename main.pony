@@ -30,6 +30,7 @@ trait Transitionable
 class StateData
   let sm: StateMachine tag
   let env: Env
+
   let initial_state: InitialState = InitialState
   let working_state: WorkingState = WorkingState
   let done_state: DoneState = DoneState
@@ -45,6 +46,8 @@ class StateData
     cur_state = initial_state
     cur_state.enter(this, cur_state)
 
+  fun log(s: String) => env.out.print(s)
+
 class InitialState is StateMachineState
   fun name(): String =>
     "InitialState"
@@ -52,7 +55,7 @@ class InitialState is StateMachineState
   fun send_to(state_data: StateData ref,
                 dest: StateMachine tag, data: String) =>
     state_data.count = state_data.count + 1
-    state_data.env.out.print(name() + "::send_to: data=" + data
+    state_data.log(name() + "::send_to: data=" + data
                            + " count=" + state_data.count.string())
     transitionTo(state_data, state_data.working_state)
     dest.send_to(state_data.sm, data)
@@ -62,15 +65,15 @@ class WorkingState is StateMachineState
     "WorkingState"
 
   fun enter(state_data: StateData ref, new_state: StateMachineState) =>
-    state_data.env.out.print(name() + "::enter:")
+    state_data.log(name() + "::enter:")
 
   fun exit(state_data: StateData ref, new_state: StateMachineState) =>
-    state_data.env.out.print(name() + "::exit:")
+    state_data.log(name() + "::exit:")
 
   fun send_to(state_data: StateData ref,
                 dest: StateMachine tag, data: String) =>
     state_data.count = state_data.count + 1
-    state_data.env.out.print(name() + "::send_to: data=" + data
+    state_data.log(name() + "::send_to: data=" + data
                            + " count=" + state_data.count.string())
     if (state_data.count >= state_data.max_count) then
       state_data.sm.stop()
@@ -79,7 +82,7 @@ class WorkingState is StateMachineState
     end
 
   fun stop(state_data: StateData ref) =>
-    state_data.env.out.print(name() + "::stop: transitionTo done_state")
+    state_data.log(name() + "::stop: transitionTo done_state")
     transitionTo(state_data, state_data.done_state)
 
 class DoneState is StateMachineState
@@ -88,7 +91,7 @@ class DoneState is StateMachineState
 
   fun stop(state_data: StateData ref) =>
     // Never transition away from DoneState
-    state_data.env.out.print(name() + "::Stop: done")
+    state_data.log(name() + "::Stop: done")
 
 actor Main is StateMachine
   var _state_data: StateData
